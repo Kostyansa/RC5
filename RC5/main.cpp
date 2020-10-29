@@ -189,6 +189,7 @@ void tests(const unsigned int key_length, const unsigned int width, const unsign
 
 int main(int argc, const char * argv[]) {
     const unsigned int key_length = 8;
+    //If you want to change the width parameter you should change typedef word to the needed size
     const unsigned int width = 16;
     const unsigned int rounds = 16;
     
