@@ -77,16 +77,24 @@ std::pair<word, word> encryptBlock(word left, word right, const std::vector<word
     left += subkeys[0];
     right += subkeys[1];
     for (long i = 1; i < subkeys.size() / 2; i++) {
-        left = cycleLeft((left ^ right), right) + subkeys[2 * i];
-        right = cycleLeft(right ^ left, left) + subkeys[2 * i + 1];
+        left ^= right;
+        left = cycleLeft(left, right);
+        left += subkeys[2 * i];
+        right ^= left;
+        right = cycleLeft(right, left);
+        right += subkeys[2 * i + 1];
     }
     return std::make_pair(left, right);
 }
 
 std::pair<word, word> decryptBlock(word left, word right, const std::vector<word>& subkeys){
     for (long i = (subkeys.size() / 2) - 1; i >= 1; i--) {
-        right = cycleRight(right - subkeys[2 * i + 1], left) ^ left;
-        left = cycleRight((left - subkeys[2 * i]), right) ^ right;
+        right -= subkeys[2 * i + 1];
+        right = cycleRight(right, left);
+        right ^= left;
+        left -= subkeys[2 * i];
+        left = cycleRight(left, right);
+        left ^= right;
     }
     right -= subkeys[1];
     left -= subkeys[0];
@@ -159,12 +167,12 @@ std::vector<word> inputWords(const unsigned int& size){
 void tests(){
     const unsigned int key_length = 8;
     const unsigned int width = 16;
-    const unsigned int rounds = 1;
+    const unsigned int rounds = 255;
     
     std::vector<word> message = {
+        1,
         65535,
-        65535,
-        65535,
+        1,
         65535
     };
     std::vector<word> key = {
