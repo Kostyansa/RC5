@@ -9,11 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-
-#define debug
-#ifdef debug
-#include <sstream>
-#endif
+#include <algorithm>
 
 typedef unsigned long long ull;
 
@@ -83,6 +79,10 @@ std::pair<word, word> encryptBlock(word left, word right, const std::vector<word
         right ^= left;
         right = cycleLeft(right, left);
         right += subkeys[2 * i + 1];
+        
+        //Should work but doesn't:
+//        left = cycleLeft(left ^ right, right) + subkeys[2 * i];
+//        right = cycleLeft(right ^ left, left) + subkeys[2 * i + 1];
     }
     return std::make_pair(left, right);
 }
@@ -95,6 +95,10 @@ std::pair<word, word> decryptBlock(word left, word right, const std::vector<word
         left -= subkeys[2 * i];
         left = cycleRight(left, right);
         left ^= right;
+        
+        //Should work but doesn't:
+//        right = cycleRight(right - subkeys[2 * i + 1], left) ^ left;
+//        left = cycleRight(left - subkeys[2 * i], right) ^ right;
     }
     right -= subkeys[1];
     left -= subkeys[0];
@@ -112,13 +116,6 @@ std::vector<word> encrypt(
     
     std::vector<word> subkeys = initializeSubkeys(magic_numbers, rounds);
     subkeys = mixSubkeys(subkeys, key);
-    
-#ifdef debug_trace
-    for (int i = 0; i < subkeys.size(); i++) {
-        std::cout << subkeys[i] << " ";
-    }
-    std::cout << std::endl;
-#endif
     
     for (long i = 0; i < message.size()/2; i++) {
         std::pair<word, word> encrypted_block = encryptBlock(message[2 * i],
@@ -164,10 +161,7 @@ std::vector<word> inputWords(const unsigned int& size){
 
 
 #ifdef debug
-void tests(){
-    const unsigned int key_length = 8;
-    const unsigned int width = 16;
-    const unsigned int rounds = 255;
+void tests(const unsigned int key_length, const unsigned int width, const unsigned int rounds){
     
     std::vector<word> message = {
         1,
@@ -190,10 +184,6 @@ void tests(){
     for (int i = 0; i < encrypted.size(); i++) {
         std::cout << message[i] << " " << encrypted[i] << " " << decrypted[i] << std::endl;
     }
-    
-    std::vector<word> subkeys = mixSubkeys(initializeSubkeys(generateMagicNumbers(width), rounds), key);
-    std::pair<word, word> block = decryptBlock(encrypted[0], encrypted[1], subkeys);
-    std::cout << "Block: " << block.first << " " << block.second << std::endl;
 }
 #endif
 
@@ -207,7 +197,7 @@ int main(int argc, const char * argv[]) {
     int n;
     bool finished = false;
 #ifdef debug
-    tests();
+    tests(key_length, width, rounds);
 #endif
 #ifndef debug
     do {
@@ -227,7 +217,7 @@ int main(int argc, const char * argv[]) {
                 std::vector<word> message = inputWords(size);
                 std::cout << "Input your key size " << key_length <<" bytes in blocks of " << width/CHAR_BIT << " bytes divided by spaces" << std::endl;
                 std::cin.clear();
-                std::vector<word> key = inputWords(key_lenght/(width/CHAR_BIT));
+                std::vector<word> key = inputWords(key_length/(width/CHAR_BIT));
                 std::vector<word> encrypted = encrypt(message, key, width, rounds);
                 std::cout << "Your encrypted message: " << std::endl;
                 for (int i = 0; i < encrypted.size(); i++) {
@@ -246,7 +236,7 @@ int main(int argc, const char * argv[]) {
                 std::vector<word> message = inputWords(size);
                 std::cout << "Input your key size " << key_length <<" in blocks of " << width/CHAR_BIT << " bytes divided by spaces" << std::endl;
                 std::cin.clear();
-                std::vector<word> key = inputWords(key_lenght/(width/CHAR_BIT));
+                std::vector<word> key = inputWords(key_length/(width/CHAR_BIT));
                 std::vector<word> decrypted = decrypt(message, key, width, rounds);
                 std::cout << "Your decrypted message: " << std::endl;
                 for (int i = 0; i < decrypted.size(); i++) {
